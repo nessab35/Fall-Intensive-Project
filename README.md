@@ -1,2 +1,5 @@
 # Fall-Intensive-Project
-Snake Game
+# created class for snake 
+# created class for strawberry
+# created class for game
+
