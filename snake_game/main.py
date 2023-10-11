@@ -5,7 +5,9 @@ import time # importing time
 import random # importing random
 
 size = 40 # assigning size to 40 so the body of thee snake is 40 pizels apart
-main_screen = (238, 148, 199) # assigning main_screen to the color of the screen
+pink = (238, 148, 199) # assinging pink to rgb color
+black = (0, 0, 0) # assigning black to rgb color
+white = (255, 255, 255)
 
 # TODO:
 class Strawberry: #create strawberry class
@@ -21,8 +23,8 @@ class Strawberry: #create strawberry class
         pygame.display.flip() # update the display surface to the screen
 
     def move(self):
-        self.x = random.randint(0, 25) * size # divide screen size x=1000 by 40 and got 25 * size so it doesn't go out the window
-        self.y = random.randint(0, 20) * size # divide screen size y=800 by 40 and got 20 * size so doesn't go out the window
+        self.x = random.randint(0, 24) * size # divide screen size x=1000 by 40 and got 25 * size so it doesn't go out the window restrict it 1 lower=24
+        self.y = random.randint(0, 19) * size # divide screen size y=800 by 40 and got 20 * size so doesn't go out the window restrict it 1 lower=19
 
 
 
@@ -36,10 +38,10 @@ class Snake: # making blue print for the snake
         self.x = [40] * length # assigning x of snake to 40*length
         self.y = [40] * length # assigning y of snake to 40*length
 
-    def increase_length(self):
-        self.length += 1
-        self.x.append(-1)
-        self.y.append(-1)
+    def increase_length(self): # defining increase length
+        self.length += 1 # increase length by 1
+        self.x.append(-1) # append x -1
+        self.y.append(-1) # append y -1
 
     def move_left(self): #def move_left
         self.direction = 'left'
@@ -71,7 +73,7 @@ class Snake: # making blue print for the snake
         self.draw() # draw
 
     def draw(self): # defining draw
-        self.parent_screen.fill((main_screen)) # filling the parent screen with color pink
+        self.parent_screen.fill((pink)) # filling the parent screen with color pink
         for i in range(self.length):
             self.parent_screen.blit(self.image, (self.x[i], self.y[i])) #drawing the block image at x,100 and y,100
         pygame.display.flip() # update entire screen with whatever is drawn on parent_screen
@@ -93,17 +95,44 @@ class Game: # making class for Game
             
         return False # or return false
 
+    # defining display_score
+    def display_score(self):
+        font = pygame.font.SysFont('timesnewroman', 30)
+        score = font.render(f"Score: {self.snake.length}", True, (black))
+        self.surface.blit(score, (800,10))
+
     def play(self): # defining play so all pieces go onto the screen
         self.snake.walk()
         self.strawberry.draw()
+        self.display_score()
+        pygame.display.flip()
 
-        if self.is_collision(self.snake.x[0], self.snake.y[0], self.strawberry.x, self.strawberry.y): # if collion occurs sanke.x[0]/snake.y[0] with strawberryx,y
+        # snake colliding with strawberry
+        if self.is_collision(self.snake.x[0], self.snake.y[0], self.strawberry.x, self.strawberry.y): 
             self.snake.increase_length() # increaseing length if there is a collision with snake and strawberry
             self.strawberry.move() # then move straberry
 
+        # snake colliding with itself
+        for i in range(3, self.snake.length):
+            if self.is_collision(self.snake.x[0], self.snake.y[0], self.snake.x[i], self.snake.y[i]):
+                raise "Game over!"
+
+    def show_game_over(self):
+        self.surface.fill(black)
+        font = pygame.font.SysFont('timesnewroman', 30)
+        line_1 = font.render(f"Game Over! Your score is {self.snake.length}", True, (white))
+        self.surface.blit(line_1, (200,300))
+        line_2 = font.render("To play again, press ENTER. To exit press ESC!", True, (white))
+        self.surface.blit(line_2, (200, 350))
+        pygame.display.flip()
+
+    def reset(self):
+        self.snake = Snake(self.surface, 1)
+        self.strawberry = Strawberry(self.surface)
 
     def run(self): # defining run
         running = True # assigning running to true
+        pause = False
 
         while running: # creating loop
             for event in pygame.event.get(): # fetching all events in pygame
@@ -111,24 +140,32 @@ class Game: # making class for Game
                     if event.key == K_ESCAPE: # if the ESC key is pressed:
                         running = False #game return false/ browser will be closed
 
-                    if event.key == K_LEFT: # if left arrow clicked:
-                        self.snake.move_left() # snake moves left
+                    if event.key == K_RETURN:
+                        pause = False
 
-                    if event.key == K_RIGHT: # if right arrow is clicked:
-                        self.snake.move_right() # snake moves right
-
-                    if event.key == K_UP: # if up arrow is pushed:
-                        self.snake.move_up() # snake moves up
-
-                    if event.key == K_DOWN: # if down arrow is clicked:
-                        self.snake.move_down() # snake moves down
+                    if not pause:
+                        if event.key == K_LEFT: # if left arrow clicked:
+                            self.snake.move_left() # snake moves left
+                        if event.key == K_RIGHT: # if right arrow is clicked:
+                            self.snake.move_right() # snake moves right
+                        if event.key == K_UP: # if up arrow is pushed:
+                            self.snake.move_up() # snake moves up
+                        if event.key == K_DOWN: # if down arrow is clicked:
+                            self.snake.move_down() # snake moves down
 
                 elif event.type == QUIT: # If quit is pushed:
                     running = False # game returns false, then closes
 
-            self.play() # using function def play(self):
+            try:
+                if not pause:
+                    self.play() # using function def play(self):
+            except Exception as e:
+                print(f"Error: {e}")
+                self.show_game_over()
+                pause = True
+                self.reset()
 
-            time.sleep(.2) # setting speed of snake to .2 seconds
+            time.sleep(.25) # setting speed of snake to .2 seconds
 
 
 if __name__ == "__main__":
